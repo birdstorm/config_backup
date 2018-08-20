@@ -11,7 +11,7 @@ export HADOOP_HOME=/usr/local/Cellar/hadoop/2.8.0  #your Hadoop path
 export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=$HADOOP_HOME/lib/native"
 export HIVE_HOME=/usr/local/Cellar/hive/2.3.1/
-export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin:$HIVE_HOME/bin
 export PATH=$PATH:/usr/local/sbin
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:$DYLD_LIBRARY_PATH
 
