@@ -61,8 +61,10 @@ export GREP_COLOR='1;35;40'
 export http_proxy='http://127.0.0.1:1087'
 export https_proxy='http://127.0.0.1:1087'
 
+
 export titleFlag=false
 
+# Use `title name` to name a tab in iterm
 function title {
 	if [[ $ITERM_SESSION_ID ]]; then
 		titleFlag=true
@@ -70,6 +72,7 @@ function title {
 	fi
 }
 
+# Use `resetTitle` to unset tab name to default
 function resetTitle {
 	titleFlag=false
 }
@@ -86,7 +89,7 @@ if [[ $ITERM_SESSION_ID ]]; then
 				local branch
 				local branchdir
 				local commithash
-				branchdir=$(basename "$(git rev-parse --show-toplevel)") #| sed -E "s/HEAD detached at //g"
+				branchdir=$(basename "$(git rev-parse --show-toplevel)")
 				commithash=$(git rev-parse --short HEAD)
 				branch=$(git branch 2>/dev/null | grep -e '\* ' | sed "s/^..\(.*\)/▶ \1/" | sed "/HEAD detached at/s/^.*$/▶ $commithash/")
 				echo -ne "\\033];$branchdir $branch\\007"
