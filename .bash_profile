@@ -1,4 +1,4 @@
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_141.jdk/Contents/Home
+export JAVA_HOME=$(/usr/libexec/java_home)
 export PATH=$JAVA_HOME/bin:$PATH
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
 export PATH=${PATH}:/usr/local/mysql/bin
@@ -29,7 +29,7 @@ alias la='ls -a'
 alias l='ls -la'
 alias grep='grep --color'
 export tispark_version='2.2.0-SNAPSHOT'
-alias spark-shell-run='spark-shell --jars core/target/tispark-core-${tispark_version}-jar-with-dependencies.jar'
+alias spark-shell-run='spark-shell --jars assembly/target/tispark-assembly-${tispark_version}.jar'
 alias spark-shell-debug='spark-shell-run --conf spark.driver.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 alias mi='mvn clean install'
 alias mit='mi -Dmaven.test.skip=true'
@@ -43,6 +43,8 @@ alias kv-version='./bin/tikv-server -V'
 alias db-version='./bin/tidb-server -V'
 alias start-pd='./bin/pd-server --name="pd" --data-dir="pd"'
 alias start-kv='./bin/tikv-server --config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
+alias start-kv-debug='./target/debug/tikv-server --config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
+alias start-rngine='./bin/tikv-server --addr "127.0.0.1:20332" --advertise-addr "127.0.0.1:20332" --pd "127.0.0.1:2379" --config="./rngine.toml"'
 alias start-db='./bin/tidb-server --path="127.0.0.1:2379" --store=tikv'
 # alias stop-tidb-componenets='stop-db && stop-kv && stop-pd'
 # alias start-tidb-components='start-pd && start-kv && start-db'
@@ -59,11 +61,44 @@ export GREP_COLOR='1;35;40'
 export http_proxy='http://127.0.0.1:1087'
 export https_proxy='http://127.0.0.1:1087'
 
+export titleFlag=false
+
 function title {
-    echo -ne "\033]0;"$*"\007"
+	if [[ $ITERM_SESSION_ID ]]; then
+		titleFlag=true
+		echo -ne "\033]0;"$*"\007"
+	fi
 }
+
+function resetTitle {
+	titleFlag=false
+}
+
+if [[ $ITERM_SESSION_ID ]]; then
+	# Display the current git repo, or directory, in iterm tabs.
+	get_iterm_label() {
+		if [[ $titleFlag = "false" ]]; then
+			if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+				local directory
+				directory=${PWD##*/}
+				echo -ne "\\033];$directory\\007"
+			else
+				local branch
+				local branchdir
+				local commithash
+				branchdir=$(basename "$(git rev-parse --show-toplevel)") #| sed -E "s/HEAD detached at //g"
+				commithash=$(git rev-parse --short HEAD)
+				branch=$(git branch 2>/dev/null | grep -e '\* ' | sed "s/^..\(.*\)/▶ \1/" | sed "/HEAD detached at/s/^.*$/▶ $commithash/")
+				echo -ne "\\033];$branchdir $branch\\007"
+			fi
+		fi
+	}
+	export PROMPT_COMMAND=get_iterm_label;"${PROMPT_COMMAND}"
+fi
 
 if [ -f /usr/local/etc/bash_completion.d/git-completion.bash ]; then
 	. /usr/local/etc/bash_completion.d/git-completion.bash
 fi
 
+
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
