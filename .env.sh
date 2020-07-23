@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 export JAVA_HOME=$(/usr/libexec/java_home)
 export PATH=$JAVA_HOME/bin:$PATH
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
@@ -22,86 +24,96 @@ export LLVM_DIR=/usr/local/Cellar/llvm/5.0.1
 export RUSTUP_HOME=/Users/birdstorm/.cargo/
 export CARGO_HOME=/Users/birdstorm/.cargo/
 export GPG_TTY=$(tty)
+export RUST_BACKTRACE=1
+
+# Set colors to match iTerm2 Terminal Colors
+export TERM=xterm-256color
 
 alias ls='ls -G'
 alias ll='ls -l'
 alias la='ls -a'
 alias l='ls -la'
 alias grep='grep --color'
-export tispark_version='2.2.0-SNAPSHOT'
+
+
+unset LSCOLORS
+export CLICOLOR=1
+export CLICOLOR_FORCE=1
+
+
+# TiSpark
+export tispark_version='2.3.0-SNAPSHOT'
 alias spark-shell-run='spark-shell --jars assembly/target/tispark-assembly-${tispark_version}.jar'
+alias spark-shell-jdbc='spark-shell --jars /Users/birdstorm/Downloads/mysql-connector-java-5.1.44/mysql-connector-java-5.1.44-bin.jar -i /usr/local/spark-2.3.3/jdbc.scala'
 alias spark-shell-debug='spark-shell-run --conf spark.driver.extraJavaOptions=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
 alias mi='mvn clean install'
 alias mit='mi -Dmaven.test.skip=true'
 alias mip='mit -P spark-2.4'
 alias mir='mip && spark-shell-run'
 alias mid='mip && spark-shell-debug'
+
+# shells
 alias tidb-shell='mysql -h 127.0.0.1 -P 4000 -uroot'
 alias mysql-shell='mysql -h 127.0.0.1 -uroot -proot'
+
+# show versions
 alias pd-version='./bin/pd-server -V'
 alias kv-version='./bin/tikv-server -V'
 alias db-version='./bin/tidb-server -V'
+
+# parameter
+# export pd-parameter-settings='--name="pd" --data-dir="pd"'
+# export kv-parameter-settings='--config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
+# export rngine-parameter-settings='--addr "127.0.0.1:20332" --advertise-addr "127.0.0.1:20332" --pd "127.0.0.1:2379" --config="./rngine.toml"'
+
+# start components
 alias start-pd='./bin/pd-server --name="pd" --data-dir="pd"'
 alias start-kv='./bin/tikv-server --config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
+alias start-kv-release='./target/release/tikv-server --config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
 alias start-kv-debug='./target/debug/tikv-server --config="./last_tikv.toml" --pd-endpoints="127.0.0.1:2379"'
 alias start-rngine='./bin/tikv-server --addr "127.0.0.1:20332" --advertise-addr "127.0.0.1:20332" --pd "127.0.0.1:2379" --config="./rngine.toml"'
+alias start-rngine-debug='./target/debug/tikv-server --addr "127.0.0.1:20332" --advertise-addr "127.0.0.1:20332" --pd "127.0.0.1:2379" --config="./rngine.toml"'
 alias start-db='./bin/tidb-server --path="127.0.0.1:2379" --store=tikv'
+alias start-flash='./theflash server --config config.xml'
+alias start-flash-client='./theflash client'
 # alias stop-tidb-componenets='stop-db && stop-kv && stop-pd'
 # alias start-tidb-components='start-pd && start-kv && start-db'
-alias gfp='git fetch -p'
+
+# git
+alias gco='git checkout'	# git checkout
+alias gcp='git cherry-pick'	# git cherry-pick
+alias gcm='git commit -m'	# git commit
+alias gca='git commit -a -m'	# git commit add all
+alias gpr='git push'	# git push to remote
+alias gpo='git push origin'	# git push to origin
+alias grv='git remote -vv'	# git remote
+alias gbv='git branch -vv'	# git branch
+alias gfp='git fetch -p --all'	# git fetch all
 function gitrefresh {
 	for branch in `git branch -vv | grep ': gone]' | awk '{print $1}'`
 	do
 		git branch -D $branch
 	done
 }
-alias grp='gfp && gitrefresh'
+alias grp='gfp && gitrefresh'	# git refresh and fetch
+alias gst='git status'	# show git status
+alias grs='grp && gst'	# show latest status
+alias grb='grp && gbv'	# show latest branches
+alias gra='grp && gbv && gst' # show latest
+
+# transfer.sh
+transfer() { if [ $# -eq 0 ]; then echo -e "No arguments specified. Usage:\necho transfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"; return 1; fi
+tmpfile=$( mktemp -t transferXXX ); if tty -s; then basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g'); curl --progress-bar --upload-file "$1" "https://transfer.sh/$basefile" >> $tmpfile; else curl --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile ; fi; cat $tmpfile; rm -f $tmpfile; }
+
+# gcp beta
+# alias google-cloud-instance1='gcloud beta compute ssh --zone "asia-northeast1-b" "instance-1" --project "shanawyf"'
+# alias google-cloud-instance2='gcloud beta compute ssh --zone "us-central1-c" "instance-us" --project "shanawyf"'
+
+# everything else
 export GREP_OPTIONS='--color=auto'
 export GREP_COLOR='1;35;40'
 export http_proxy='http://127.0.0.1:1087'
 export https_proxy='http://127.0.0.1:1087'
 
-
-export titleFlag=false
-
-# Use `title name` to name a tab in iterm
-function title {
-	if [[ $ITERM_SESSION_ID ]]; then
-		titleFlag=true
-		echo -ne "\033]0;"$*"\007"
-	fi
-}
-
-# Use `resetTitle` to unset tab name to default
-function resetTitle {
-	titleFlag=false
-}
-
-if [[ $ITERM_SESSION_ID ]]; then
-	# Display the current git repo, or directory, in iterm tabs.
-	get_iterm_label() {
-		if [[ $titleFlag = "false" ]]; then
-			if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-				local directory
-				directory=${PWD##*/}
-				echo -ne "\\033];$directory\\007"
-			else
-				local branch
-				local branchdir
-				local commithash
-				branchdir=$(basename "$(git rev-parse --show-toplevel)")
-				commithash=$(git rev-parse --short HEAD)
-				branch=$(git branch 2>/dev/null | grep -e '\* ' | sed "s/^..\(.*\)/▶ \1/" | sed "/HEAD detached at/s/^.*$/▶ $commithash/")
-				echo -ne "\\033];$branchdir $branch\\007"
-			fi
-		fi
-	}
-	export PROMPT_COMMAND=get_iterm_label;"${PROMPT_COMMAND}"
-fi
-
-if [ -f /usr/local/etc/bash_completion.d/git-completion.bash ]; then
-	. /usr/local/etc/bash_completion.d/git-completion.bash
-fi
-
-
-test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+# Iterm2
+export PATH=/Users/birdstorm/.tiup/bin:$PATH
